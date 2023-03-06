@@ -73,6 +73,18 @@ exports.login = async (req, res) => {
   }
 };
 
+// function for Logout
+exports.logout = async (req, res) => {
+  try {
+    res
+      .status(200)
+      .cookie("token", null, { expires: new Date(Date.now()), httpOnly: true })
+      .json({ success: true, message: "logged Out" });
+  } catch (error) {
+    res.status(500).json({ sucess: false, message: error.message });
+  }
+};
+
 // function for follow and unfallow user
 exports.followUser = async (req, res) => {
   try {
@@ -105,5 +117,59 @@ exports.followUser = async (req, res) => {
     }
   } catch (error) {
     req.status(500).json({ sucess: false, message: error.message });
+  }
+};
+
+// function for updating Password
+
+exports.updatePassword = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("+password");
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        sucess: false,
+        message: "Please provide old and new password",
+      });
+    }
+    const isMatch = await user.matchPassword(oldPassword);
+
+    if (!isMatch) {
+      res
+        .status(400)
+        .json({ sucess: false, message: "Incorrect Old Password" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ sucess: true, message: "Password updated" });
+  } catch (error) {
+    res.status(500).json({ sucess: false, message: error.message });
+  }
+};
+
+// function for updating Profile
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const { name, email } = req.body;
+
+    if (name) {
+      user.name = name;
+    }
+    if (email) {
+      user.email = email;
+    }
+
+    //User Avatar: TODO
+
+    await user.save();
+
+    res.status(200).json({ success: true, message: "Profile updated" });
+  } catch (error) {
+    res.status(500).json({ sucess: false, message: error.message });
   }
 };
