@@ -6,6 +6,10 @@ const {
   logout,
   updatePassword,
   updateProfile,
+  deleteMyProfile,
+  myProfile,
+  getUserProfile,
+  getAllUsers,
 } = require("../controllers/user");
 const { isAuthenticated } = require("../middlewares/auth");
 const router = express.Router();
@@ -27,5 +31,17 @@ router.route("/update/password").put(isAuthenticated, updatePassword);
 
 // route for updating profile
 router.route("/update/profile").put(isAuthenticated, updateProfile);
+
+//route for deleting profile
+router.route("/delete/me").delete(isAuthenticated, deleteMyProfile);
+
+//route for getting My posts
+router.route("/me").get(isAuthenticated, myProfile);
+
+//route for searching user
+router.route("/user/:id").get(isAuthenticated, getUserProfile);
+
+// route for getting all users
+router.route("/users").get(isAuthenticated, getAllUsers);
 
 module.exports = router;
