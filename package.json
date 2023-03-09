@@ -2,9 +2,8 @@
   "name": "socialapp",
   "version": "1.0.0",
   "description": "",
-  "main": "/backend/server.js",
   "scripts": {
-    "dev": "node backend/server.js"
+    "start": "node backend/server.js"
   },
   "repository": {
     "type": "git",
