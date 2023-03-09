@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const Post = require("../models/post");
-const { findOne } = require("../models/User");
+const { sendEmail } = require("../middlewares/sendEmail");
+const crypto = require("crypto");
 
 // for ragistering user
 exports.register = async (req, res) => {
@@ -268,13 +269,13 @@ exports.getAllUsers = async (req, res) => {
 // function for forgot password
 exports.forgotPassword = async (req, res) => {
   try {
-    const user = await findOne({ email: req.body.email });
+    const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
       return res.status(404).json({ sucess: false, message: "User not found" });
     }
 
-    const resetPasswordToken = user.getResetPasswordToken();
+    const resetPasswordToken = await user.getResetPasswordToken();
     await user.save();
 
     const resetUrl = `${req.protocol}://${req.get(
@@ -300,9 +301,41 @@ exports.forgotPassword = async (req, res) => {
 
       await user.save();
 
-      req.status(500).json({ sucess: false, error: error.message });
+      res.status(500).json({ sucess: false, error: error.message });
     }
   } catch (error) {
-    req.status(500).json({ sucess: false, error: error.message });
+    res.status(500).json({ sucess: false, error: error.message });
+  }
+};
+
+// function for reset password
+exports.resetPassword = async (req, res) => {
+  try {
+    const resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetTokenExpire: { $gt: Date.now() },
+    });
+    console.log(resetPasswordToken);
+
+    if (!user) {
+      return res
+        .status(401)
+        .json({ sucess: false, message: "Token is invalid or expired" });
+    }
+
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetTokenExpire = undefined;
+
+    await user.save();
+
+    res.status(200).json({ sucess: true, message: "Password updated" });
+  } catch (error) {
+    res.status(500).json({ sucess: false, error: error.message });
   }
 };
